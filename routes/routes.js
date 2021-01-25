@@ -16,6 +16,7 @@ const bcrypt = require('bcrypt')
 const passport = require('passport')
 const User = require('../models/user_model')
 const initializePassport = require('../passport-config')
+const Contact = require('../models/contact_model')
 
 initializePassport(
   passport,
@@ -23,8 +24,11 @@ initializePassport(
   id => User.findById(users => User.id === id)
 )
 
-router.route('/').get( checkAuthenticated,(req, res)=>{
-  res.render('index.ejs')
+router.get('/', checkAuthenticated , async(req,res) =>{
+  const owner = req.user._id
+  records = await Contact.find().where('owner').in(owner).exec()
+    .then(records => res.render('index.ejs', { records: records }))
+    .catch(err => res.status(400).json('Error: ' + err));
 });
 
 router.route('/login').get(checkNotAuthenticated, (req, res)=>{
@@ -66,6 +70,47 @@ router.route('/logout').delete( (req, res) => {
   res.redirect('/api/login')
 })
 
+
+router.post('/addnew',checkAuthenticated, async(req,res) => {
+  try{
+    const owner = req.user._id
+    const newContact = new Contact(
+    {
+        owner:owner,
+        name: req.body.name,
+        number: req.body.number
+    });
+    await newContact.save();
+    res.status(200).redirect('/api')}catch(err){
+        res.status(500).send("server error");
+    }
+})
+
+router.route('/update').put((req, res) => {
+    return Contact.updateOne(
+      { _id: req.body.id },  // <-- find stage
+      { $set: {                // <-- set stage
+         name: req.body.name,
+         number: req.body.number
+        } 
+      }   
+    ).then(() => {
+      res.status(200).json({ message: "Update successful!" });
+    }).catch(
+      (error) => {
+        res.status(400).json({
+          error: error
+      });
+    });
+});
+
+router.route('/:id').delete((req, res) => {
+  Contact.findByIdAndDelete(req.params.id)
+    .then(() => res.json('Contact deleted.'))
+    .catch(err => res.status(400).json('Error: ' + err));
+});
+
+
 // check if the user is authenticated if not redirect to login , this to block unauthenticated users from accessing the home page
 function checkAuthenticated(req, res, next) {
     if (req.isAuthenticated()) {
@@ -80,5 +125,6 @@ function checkNotAuthenticated(req, res, next) {
     }
     next()
   }
+
 module.exports = router;
 
