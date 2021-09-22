@@ -32,16 +32,19 @@
     <table class="table table-striped table-responsive">
         <thead>
           <tr>
-            <th>Name</th>
-            <th>Number</th>
+            <th style="
+            min-width: 300px;
+        ">________Name_______</th>
+            <th style="
+            min-width: 300px;
+        ">________Number_______</th>
           </tr>
         </thead>
         <tbody>
           <% records.forEach(records => { %>
             <tr>
-              <td><a href="<%= records.name %>"><%= records.name %></a></td>
-              <td><a href="<%= records.number %>"><%= records.number %></a></td>
-              <td><a href="/api/"><%= records.number %></a></td>
+              <td><a><%= records.name %></a></td>
+              <td><a ><%= records.number %></a></td>
             </tr>
           <% }) %>
         </tbody>
